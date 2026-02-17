@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sudoku</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Sudoku</h1>
+      <div class="timer-row">
+        <span class="timer" id="timer" aria-live="polite">0:00</span>
+        <span class="best" id="best">Best: —</span>
+      </div>
+      <div class="controls">
+        <select id="difficulty" aria-label="Difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button type="button" id="new-game">New Game</button>
+        <button type="button" id="pause-btn">Pause</button>
+        <button type="button" id="check">Check</button>
+      </div>
+    </header>
+    <main>
+      <div id="message" class="message" aria-live="polite"></div>
+      <div class="board-wrap" id="board-wrap">
+        <div class="board" id="board" role="grid" aria-label="Sudoku grid"></div>
+        <div class="pause-overlay" id="pause-overlay" aria-hidden="true">Paused</div>
+      </div>
+    </main>
+    <footer>
+      <p>Fill every row, column, and 3×3 box with digits 1–9. No repeats.</p>
+    </footer>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

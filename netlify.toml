@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  # No build step – static site
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
