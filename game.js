@@ -18,7 +18,7 @@
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
-  const numpadEl = document.getElementById("numpad");
+  const popupOverlayEl = document.getElementById("number-popup-overlay");
 
   function isMobile() {
     return ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
@@ -27,6 +27,22 @@
 
   function setMobileClass() {
     document.body.classList.toggle("mobile", isMobile());
+  }
+
+  function showNumberPopup() {
+    if (popupOverlayEl) {
+      popupOverlayEl.classList.add("show");
+      popupOverlayEl.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeNumberPopup() {
+    if (popupOverlayEl) {
+      popupOverlayEl.classList.remove("show");
+      popupOverlayEl.setAttribute("aria-hidden", "true");
+    }
+    selected = null;
+    updateMobileSelectionUI();
   }
 
   function formatTime(seconds) {
@@ -91,6 +107,7 @@
         document.activeElement.blur();
       }
       selected = null;
+      closeNumberPopup();
       updateMobileSelectionUI();
       boardWrapEl.classList.add("paused");
     } else {
@@ -168,14 +185,12 @@
       const cell = getCell(selected.r, selected.c);
       if (cell && cell.classList.contains("user")) {
         cell.classList.add("selected");
-        if (numpadEl) {
-          numpadEl.setAttribute("aria-hidden", "false");
-        }
-      } else if (numpadEl) {
-        numpadEl.setAttribute("aria-hidden", "true");
+        if (isMobile()) showNumberPopup();
+      } else if (isMobile()) {
+        closeNumberPopup();
       }
-    } else if (numpadEl) {
-      numpadEl.setAttribute("aria-hidden", "true");
+    } else if (isMobile()) {
+      closeNumberPopup();
     }
   }
 
@@ -317,7 +332,7 @@
     updateBestDisplay();
   }
 
-  function onNumpadClick(e) {
+  function onPopupNumberClick(e) {
     const btn = e.target.closest(".numpad-btn");
     if (!btn || !selected || paused) return;
     const cell = getCell(selected.r, selected.c);
@@ -327,6 +342,7 @@
     cell.textContent = n ? String(n) : "";
     cell.classList.remove("wrong");
     clearMessage();
+    closeNumberPopup();
   }
 
   newGameBtn.addEventListener("click", newGame);
@@ -334,17 +350,12 @@
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
 
-  if (numpadEl) {
-    numpadEl.addEventListener("click", onNumpadClick);
+  if (popupOverlayEl) {
+    popupOverlayEl.addEventListener("click", (e) => {
+      if (e.target === popupOverlayEl) closeNumberPopup();
+    });
+    popupOverlayEl.addEventListener("click", onPopupNumberClick);
   }
-
-  document.addEventListener("click", (e) => {
-    if (!isMobile()) return;
-    if (selected && !e.target.closest(".cell") && !e.target.closest("#numpad")) {
-      selected = null;
-      updateMobileSelectionUI();
-    }
-  });
 
   window.addEventListener("resize", setMobileClass);
   setMobileClass();

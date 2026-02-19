@@ -212,21 +212,34 @@ h1 {
 .cell:nth-child(n+19):nth-child(-n+27),
 .cell:nth-child(n+46):nth-child(-n+54) { border-bottom-width: 2px; }
 
-/* In-app number pad: only on touch / small screens (no system keyboard) */
-.numpad {
+/* Mini popup: tap empty cell to choose number (mobile) */
+.number-popup-overlay {
   display: none;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  max-width: 240px;
-  margin: 1rem auto 0;
-  padding: 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-tap-highlight-color: transparent;
 }
 
-body.mobile .numpad {
+.number-popup-overlay.show {
+  display: flex;
+}
+
+.number-popup {
   display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  min-width: 160px;
+  max-width: 220px;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .numpad-btn {
@@ -237,12 +250,13 @@ body.mobile .numpad {
   background: var(--border);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.85rem;
+  padding: 0.75rem 0.5rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
+.numpad-btn:hover,
 .numpad-btn:active {
   background: var(--accent);
   color: var(--bg);
@@ -250,11 +264,12 @@ body.mobile .numpad {
 
 .numpad-btn.numpad-clear {
   grid-column: span 3;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-family: "Outfit", system-ui, sans-serif;
   color: var(--muted);
 }
 
+.numpad-btn.numpad-clear:hover,
 .numpad-btn.numpad-clear:active {
   color: var(--bg);
 }
