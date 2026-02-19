@@ -107,6 +107,16 @@ h1 {
   border-color: var(--accent-hover);
 }
 
+.input-method-btn {
+  display: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+body.mobile .input-method-btn {
+  display: inline-block;
+}
+
 .message {
   min-height: 1.5rem;
   text-align: center;

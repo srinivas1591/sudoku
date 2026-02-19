@@ -19,6 +19,11 @@
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
   const popupOverlayEl = document.getElementById("number-popup-overlay");
+  const numberPopupEl = document.getElementById("number-popup");
+  const inputMethodToggleEl = document.getElementById("input-method-toggle");
+
+  const INPUT_METHOD_KEY = "sudoku-input-method";
+  let popupTarget = null;
 
   function isMobile() {
     return ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
@@ -30,7 +35,8 @@
   }
 
   function showNumberPopup() {
-    if (popupOverlayEl) {
+    if (popupOverlayEl && selected) {
+      popupTarget = { r: selected.r, c: selected.c };
       popupOverlayEl.classList.add("show");
       popupOverlayEl.setAttribute("aria-hidden", "false");
     }
@@ -41,8 +47,23 @@
       popupOverlayEl.classList.remove("show");
       popupOverlayEl.setAttribute("aria-hidden", "true");
     }
+    popupTarget = null;
     selected = null;
     updateMobileSelectionUI();
+  }
+
+  function usePopupInput() {
+    return localStorage.getItem(INPUT_METHOD_KEY) !== "keyboard";
+  }
+
+  function setInputMethod(popup) {
+    localStorage.setItem(INPUT_METHOD_KEY, popup ? "popup" : "keyboard");
+    closeNumberPopup();
+    if (inputMethodToggleEl) {
+      inputMethodToggleEl.textContent = popup ? "Popup" : "Keyboard";
+      inputMethodToggleEl.title = popup ? "Using number popup. Click to switch to keyboard." : "Using keyboard. Click to switch to popup.";
+    }
+    render();
   }
 
   function formatTime(seconds) {
@@ -185,7 +206,7 @@
       const cell = getCell(selected.r, selected.c);
       if (cell && cell.classList.contains("user")) {
         cell.classList.add("selected");
-        if (isMobile()) showNumberPopup();
+        if (isMobile() && usePopupInput()) showNumberPopup();
       } else if (isMobile()) {
         closeNumberPopup();
       }
@@ -197,6 +218,8 @@
   function render() {
     boardEl.innerHTML = "";
     const mobile = isMobile();
+    const usePopup = usePopupInput();
+    const usePopupOnMobile = mobile && usePopup;
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
         const cell = document.createElement("div");
@@ -208,7 +231,7 @@
         cell.addEventListener("focus", () => { selected = { r, c }; if (mobile) updateMobileSelectionUI(); });
         cell.addEventListener("blur", () => { selected = null; if (mobile) updateMobileSelectionUI(); });
         cell.addEventListener("click", (e) => {
-          if (mobile && cell.classList.contains("user")) {
+          if (usePopupOnMobile && cell.classList.contains("user")) {
             e.preventDefault();
             selected = { r, c };
             updateMobileSelectionUI();
@@ -222,8 +245,8 @@
           cell.addEventListener("keydown", onKeyNavigateOnly);
         } else {
           cell.classList.add("user");
-          cell.textContent = "";
-          if (!mobile) {
+          cell.textContent = puzzle[r][c] ? String(puzzle[r][c]) : "";
+          if (!usePopupOnMobile) {
             cell.contentEditable = "true";
             cell.setAttribute("inputmode", "numeric");
             cell.addEventListener("keydown", onKey);
@@ -334,11 +357,15 @@
 
   function onPopupNumberClick(e) {
     const btn = e.target.closest(".numpad-btn");
-    if (!btn || !selected || paused) return;
-    const cell = getCell(selected.r, selected.c);
+    if (!btn || paused) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const target = popupTarget;
+    if (!target) return;
+    const cell = getCell(target.r, target.c);
     if (!cell || !cell.classList.contains("user")) return;
     const n = parseInt(btn.dataset.n, 10);
-    puzzle[selected.r][selected.c] = n;
+    puzzle[target.r][target.c] = n;
     cell.textContent = n ? String(n) : "";
     cell.classList.remove("wrong");
     clearMessage();
@@ -350,11 +377,19 @@
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
 
+  if (inputMethodToggleEl) {
+    inputMethodToggleEl.textContent = usePopupInput() ? "Popup" : "Keyboard";
+    inputMethodToggleEl.title = usePopupInput() ? "Using number popup. Click to switch to keyboard." : "Using keyboard. Click to switch to popup.";
+    inputMethodToggleEl.addEventListener("click", () => setInputMethod(!usePopupInput()));
+  }
+
   if (popupOverlayEl) {
     popupOverlayEl.addEventListener("click", (e) => {
       if (e.target === popupOverlayEl) closeNumberPopup();
     });
-    popupOverlayEl.addEventListener("click", onPopupNumberClick);
+  }
+  if (numberPopupEl) {
+    numberPopupEl.addEventListener("click", onPopupNumberClick);
   }
 
   window.addEventListener("resize", setMobileClass);
