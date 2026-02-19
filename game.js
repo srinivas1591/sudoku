@@ -163,12 +163,17 @@
         cell.setAttribute("tabindex", "0");
         cell.addEventListener("focus", () => {
           selected = { r, c };
+          boardEl.querySelectorAll(".cell").forEach((c) => c.classList.remove("cell-focus"));
+          cell.classList.add("cell-focus");
           if (cell.classList.contains("user") && cell.textContent.length > 0) {
             requestAnimationFrame(() => placeCaretAtEnd(cell));
           }
           scrollFocusedCellIntoView();
         });
-        cell.addEventListener("blur", () => { selected = null; });
+        cell.addEventListener("blur", () => {
+          selected = null;
+          cell.classList.remove("cell-focus");
+        });
         cell.addEventListener("click", () => cell.focus());
         if (puzzle[r][c] !== 0) {
           cell.classList.add("given");
@@ -210,9 +215,6 @@
         }
         if (scrollBy > 0) {
           window.scrollBy({ top: scrollBy, left: 0, behavior: "smooth" });
-        }
-        if (rect.top < padding) {
-          window.scrollBy({ top: rect.top - padding, left: 0, behavior: "smooth" });
         }
       } else {
         boardWrapEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
