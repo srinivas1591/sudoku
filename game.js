@@ -11,6 +11,7 @@
 
   const boardEl = document.getElementById("board");
   const boardWrapEl = document.getElementById("board-wrap");
+  const footerEl = document.querySelector("footer");
   const messageEl = document.getElementById("message");
   const timerEl = document.getElementById("timer");
   const bestEl = document.getElementById("best");
@@ -197,9 +198,18 @@
         const rect = boardWrapEl.getBoundingClientRect();
         const vv = window.visualViewport;
         const padding = 24;
+        let scrollBy = 0;
         if (rect.bottom > vv.height - padding) {
-          const delta = rect.bottom - (vv.height - padding);
-          window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+          scrollBy = Math.max(scrollBy, rect.bottom - (vv.height - padding));
+        }
+        if (footerEl) {
+          const footerRect = footerEl.getBoundingClientRect();
+          if (footerRect.top < vv.height) {
+            scrollBy = Math.max(scrollBy, footerRect.top - vv.height);
+          }
+        }
+        if (scrollBy > 0) {
+          window.scrollBy({ top: scrollBy, left: 0, behavior: "smooth" });
         }
         if (rect.top < padding) {
           window.scrollBy({ top: rect.top - padding, left: 0, behavior: "smooth" });
