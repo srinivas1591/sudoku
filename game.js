@@ -18,53 +18,6 @@
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
-  const popupOverlayEl = document.getElementById("number-popup-overlay");
-  const numberPopupEl = document.getElementById("number-popup");
-  const inputMethodToggleEl = document.getElementById("input-method-toggle");
-
-  const INPUT_METHOD_KEY = "sudoku-input-method";
-  let popupTarget = null;
-
-  function isMobile() {
-    return ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
-      window.matchMedia("(max-width: 600px)").matches;
-  }
-
-  function setMobileClass() {
-    document.body.classList.toggle("mobile", isMobile());
-  }
-
-  function showNumberPopup() {
-    if (popupOverlayEl && selected) {
-      popupTarget = { r: selected.r, c: selected.c };
-      popupOverlayEl.classList.add("show");
-      popupOverlayEl.setAttribute("aria-hidden", "false");
-    }
-  }
-
-  function closeNumberPopup() {
-    if (popupOverlayEl) {
-      popupOverlayEl.classList.remove("show");
-      popupOverlayEl.setAttribute("aria-hidden", "true");
-    }
-    popupTarget = null;
-    selected = null;
-    updateMobileSelectionUI();
-  }
-
-  function usePopupInput() {
-    return localStorage.getItem(INPUT_METHOD_KEY) !== "keyboard";
-  }
-
-  function setInputMethod(popup) {
-    localStorage.setItem(INPUT_METHOD_KEY, popup ? "popup" : "keyboard");
-    closeNumberPopup();
-    if (inputMethodToggleEl) {
-      inputMethodToggleEl.textContent = popup ? "Popup" : "Keyboard";
-      inputMethodToggleEl.title = popup ? "Using number popup. Click to switch to keyboard." : "Using keyboard. Click to switch to popup.";
-    }
-    render();
-  }
 
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
@@ -127,9 +80,6 @@
       if (document.activeElement && boardEl.contains(document.activeElement)) {
         document.activeElement.blur();
       }
-      selected = null;
-      closeNumberPopup();
-      updateMobileSelectionUI();
       boardWrapEl.classList.add("paused");
     } else {
       boardWrapEl.classList.remove("paused");
@@ -200,26 +150,8 @@
     });
   }
 
-  function updateMobileSelectionUI() {
-    boardEl.querySelectorAll(".cell").forEach((el) => el.classList.remove("selected"));
-    if (selected) {
-      const cell = getCell(selected.r, selected.c);
-      if (cell && cell.classList.contains("user")) {
-        cell.classList.add("selected");
-        if (isMobile() && usePopupInput()) showNumberPopup();
-      } else if (isMobile()) {
-        closeNumberPopup();
-      }
-    } else if (isMobile()) {
-      closeNumberPopup();
-    }
-  }
-
   function render() {
     boardEl.innerHTML = "";
-    const mobile = isMobile();
-    const usePopup = usePopupInput();
-    const usePopupOnMobile = mobile && usePopup;
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
         const cell = document.createElement("div");
@@ -228,35 +160,29 @@
         cell.dataset.c = c;
         cell.setAttribute("role", "gridcell");
         cell.setAttribute("tabindex", "0");
-        cell.addEventListener("focus", () => { selected = { r, c }; if (mobile) updateMobileSelectionUI(); });
-        cell.addEventListener("blur", () => { selected = null; if (mobile) updateMobileSelectionUI(); });
-        cell.addEventListener("click", (e) => {
-          if (usePopupOnMobile && cell.classList.contains("user")) {
-            e.preventDefault();
-            selected = { r, c };
-            updateMobileSelectionUI();
-          } else {
-            cell.focus();
+        cell.addEventListener("focus", () => {
+          selected = { r, c };
+          if (cell.classList.contains("user") && cell.textContent.length > 0) {
+            requestAnimationFrame(() => placeCaretAtEnd(cell));
           }
         });
+        cell.addEventListener("blur", () => { selected = null; });
+        cell.addEventListener("click", () => cell.focus());
         if (puzzle[r][c] !== 0) {
           cell.classList.add("given");
           cell.textContent = puzzle[r][c];
           cell.addEventListener("keydown", onKeyNavigateOnly);
         } else {
           cell.classList.add("user");
-          cell.textContent = puzzle[r][c] ? String(puzzle[r][c]) : "";
-          if (!usePopupOnMobile) {
-            cell.contentEditable = "true";
-            cell.setAttribute("inputmode", "numeric");
-            cell.addEventListener("keydown", onKey);
-            cell.addEventListener("input", onInput);
-          }
+          cell.contentEditable = "true";
+          cell.setAttribute("inputmode", "numeric");
+          cell.textContent = "";
+          cell.addEventListener("keydown", onKey);
+          cell.addEventListener("input", onInput);
         }
         boardEl.appendChild(cell);
       }
     }
-    if (mobile) updateMobileSelectionUI();
   }
 
   function getCell(r, c) {
@@ -355,44 +281,10 @@
     updateBestDisplay();
   }
 
-  function onPopupNumberClick(e) {
-    const btn = e.target.closest(".numpad-btn");
-    if (!btn || paused) return;
-    e.stopPropagation();
-    e.preventDefault();
-    const target = popupTarget;
-    if (!target) return;
-    const cell = getCell(target.r, target.c);
-    if (!cell || !cell.classList.contains("user")) return;
-    const n = parseInt(btn.dataset.n, 10);
-    puzzle[target.r][target.c] = n;
-    cell.textContent = n ? String(n) : "";
-    cell.classList.remove("wrong");
-    clearMessage();
-    closeNumberPopup();
-  }
-
   newGameBtn.addEventListener("click", newGame);
   pauseBtn.addEventListener("click", () => setPaused(!paused));
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
 
-  if (inputMethodToggleEl) {
-    inputMethodToggleEl.textContent = usePopupInput() ? "Popup" : "Keyboard";
-    inputMethodToggleEl.title = usePopupInput() ? "Using number popup. Click to switch to keyboard." : "Using keyboard. Click to switch to popup.";
-    inputMethodToggleEl.addEventListener("click", () => setInputMethod(!usePopupInput()));
-  }
-
-  if (popupOverlayEl) {
-    popupOverlayEl.addEventListener("click", (e) => {
-      if (e.target === popupOverlayEl) closeNumberPopup();
-    });
-  }
-  if (numberPopupEl) {
-    numberPopupEl.addEventListener("click", onPopupNumberClick);
-  }
-
-  window.addEventListener("resize", setMobileClass);
-  setMobileClass();
   newGame();
 })();
