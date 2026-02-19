@@ -18,6 +18,16 @@
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
+  const numpadEl = document.getElementById("numpad");
+
+  function isMobile() {
+    return ("ontouchstart" in window || navigator.maxTouchPoints > 0) &&
+      window.matchMedia("(max-width: 600px)").matches;
+  }
+
+  function setMobileClass() {
+    document.body.classList.toggle("mobile", isMobile());
+  }
 
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
@@ -80,6 +90,8 @@
       if (document.activeElement && boardEl.contains(document.activeElement)) {
         document.activeElement.blur();
       }
+      selected = null;
+      updateMobileSelectionUI();
       boardWrapEl.classList.add("paused");
     } else {
       boardWrapEl.classList.remove("paused");
@@ -150,8 +162,26 @@
     });
   }
 
+  function updateMobileSelectionUI() {
+    boardEl.querySelectorAll(".cell").forEach((el) => el.classList.remove("selected"));
+    if (selected) {
+      const cell = getCell(selected.r, selected.c);
+      if (cell && cell.classList.contains("user")) {
+        cell.classList.add("selected");
+        if (numpadEl) {
+          numpadEl.setAttribute("aria-hidden", "false");
+        }
+      } else if (numpadEl) {
+        numpadEl.setAttribute("aria-hidden", "true");
+      }
+    } else if (numpadEl) {
+      numpadEl.setAttribute("aria-hidden", "true");
+    }
+  }
+
   function render() {
     boardEl.innerHTML = "";
+    const mobile = isMobile();
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
         const cell = document.createElement("div");
@@ -160,24 +190,35 @@
         cell.dataset.c = c;
         cell.setAttribute("role", "gridcell");
         cell.setAttribute("tabindex", "0");
-        cell.addEventListener("focus", () => { selected = { r, c }; });
-        cell.addEventListener("blur", () => { selected = null; });
-        cell.addEventListener("click", () => cell.focus());
+        cell.addEventListener("focus", () => { selected = { r, c }; if (mobile) updateMobileSelectionUI(); });
+        cell.addEventListener("blur", () => { selected = null; if (mobile) updateMobileSelectionUI(); });
+        cell.addEventListener("click", (e) => {
+          if (mobile && cell.classList.contains("user")) {
+            e.preventDefault();
+            selected = { r, c };
+            updateMobileSelectionUI();
+          } else {
+            cell.focus();
+          }
+        });
         if (puzzle[r][c] !== 0) {
           cell.classList.add("given");
           cell.textContent = puzzle[r][c];
           cell.addEventListener("keydown", onKeyNavigateOnly);
         } else {
           cell.classList.add("user");
-          cell.contentEditable = "true";
-          cell.setAttribute("inputmode", "numeric");
           cell.textContent = "";
-          cell.addEventListener("keydown", onKey);
-          cell.addEventListener("input", onInput);
+          if (!mobile) {
+            cell.contentEditable = "true";
+            cell.setAttribute("inputmode", "numeric");
+            cell.addEventListener("keydown", onKey);
+            cell.addEventListener("input", onInput);
+          }
         }
         boardEl.appendChild(cell);
       }
     }
+    if (mobile) updateMobileSelectionUI();
   }
 
   function getCell(r, c) {
@@ -276,10 +317,36 @@
     updateBestDisplay();
   }
 
+  function onNumpadClick(e) {
+    const btn = e.target.closest(".numpad-btn");
+    if (!btn || !selected || paused) return;
+    const cell = getCell(selected.r, selected.c);
+    if (!cell || !cell.classList.contains("user")) return;
+    const n = parseInt(btn.dataset.n, 10);
+    puzzle[selected.r][selected.c] = n;
+    cell.textContent = n ? String(n) : "";
+    cell.classList.remove("wrong");
+    clearMessage();
+  }
+
   newGameBtn.addEventListener("click", newGame);
   pauseBtn.addEventListener("click", () => setPaused(!paused));
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
 
+  if (numpadEl) {
+    numpadEl.addEventListener("click", onNumpadClick);
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!isMobile()) return;
+    if (selected && !e.target.closest(".cell") && !e.target.closest("#numpad")) {
+      selected = null;
+      updateMobileSelectionUI();
+    }
+  });
+
+  window.addEventListener("resize", setMobileClass);
+  setMobileClass();
   newGame();
 })();
