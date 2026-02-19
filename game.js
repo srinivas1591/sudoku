@@ -159,19 +159,22 @@
         cell.dataset.r = r;
         cell.dataset.c = c;
         cell.setAttribute("role", "gridcell");
+        cell.setAttribute("tabindex", "0");
+        cell.addEventListener("focus", () => { selected = { r, c }; });
+        cell.addEventListener("blur", () => { selected = null; });
+        cell.addEventListener("click", () => cell.focus());
         if (puzzle[r][c] !== 0) {
           cell.classList.add("given");
           cell.textContent = puzzle[r][c];
+          cell.addEventListener("keydown", onKeyNavigateOnly);
         } else {
           cell.classList.add("user");
           cell.contentEditable = "true";
+          cell.setAttribute("inputmode", "numeric");
           cell.textContent = "";
           cell.addEventListener("keydown", onKey);
           cell.addEventListener("input", onInput);
-          cell.addEventListener("focus", () => { selected = { r, c }; });
-          cell.addEventListener("blur", () => { selected = null; });
         }
-        cell.addEventListener("click", () => cell.focus());
         boardEl.appendChild(cell);
       }
     }
@@ -185,10 +188,20 @@
     const el = e.target;
     const v = el.textContent.replace(/\D/g, "").slice(-1);
     el.textContent = v;
+    placeCaretAtEnd(el);
     const r = +el.dataset.r, c = +el.dataset.c;
     puzzle[r][c] = v ? parseInt(v, 10) : 0;
     el.classList.remove("wrong");
     clearMessage();
+  }
+
+  function placeCaretAtEnd(el) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 
   function onKey(e) {
@@ -205,10 +218,24 @@
     const dir = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
     if (dir) {
       e.preventDefault();
-      const nr = Math.max(0, Math.min(8, r + dir[0])), nc = Math.max(0, Math.min(8, c + dir[1]));
-      const next = getCell(nr, nc);
-      if (next && next.contentEditable === "true") next.focus();
+      moveFocus(r, c, dir);
     }
+  }
+
+  function onKeyNavigateOnly(e) {
+    const dir = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[e.key];
+    if (dir) {
+      e.preventDefault();
+      const r = +e.target.dataset.r, c = +e.target.dataset.c;
+      moveFocus(r, c, dir);
+    }
+  }
+
+  function moveFocus(r, c, dir) {
+    const nr = Math.max(0, Math.min(8, r + dir[0]));
+    const nc = Math.max(0, Math.min(8, c + dir[1]));
+    const next = getCell(nr, nc);
+    if (next) next.focus();
   }
 
   function check() {

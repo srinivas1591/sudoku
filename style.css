@@ -179,6 +179,12 @@ h1 {
   cursor: default;
 }
 
+.cell.given:focus {
+  outline: 2px solid var(--muted);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
 .cell.user {
   color: var(--accent);
   cursor: pointer;
