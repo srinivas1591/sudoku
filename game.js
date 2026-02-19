@@ -165,6 +165,7 @@
           if (cell.classList.contains("user") && cell.textContent.length > 0) {
             requestAnimationFrame(() => placeCaretAtEnd(cell));
           }
+          scrollFocusedCellIntoView(cell);
         });
         cell.addEventListener("blur", () => { selected = null; });
         cell.addEventListener("click", () => cell.focus());
@@ -187,6 +188,26 @@
 
   function getCell(r, c) {
     return boardEl.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+  }
+
+  function scrollFocusedCellIntoView(el) {
+    function doScroll() {
+      if (window.visualViewport) {
+        const rect = el.getBoundingClientRect();
+        const vv = window.visualViewport;
+        const padding = 24;
+        if (rect.bottom > vv.height - padding) {
+          const delta = rect.bottom - (vv.height - padding);
+          window.scrollBy({ top: delta, left: 0, behavior: "smooth" });
+        }
+        if (rect.top < padding) {
+          window.scrollBy({ top: rect.top - padding, left: 0, behavior: "smooth" });
+        }
+      } else {
+        el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      }
+    }
+    setTimeout(doScroll, 350);
   }
 
   function onInput(e) {
