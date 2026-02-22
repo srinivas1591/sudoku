@@ -151,6 +151,13 @@ h1 {
   transform: scale(0.98);
 }
 
+.controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .controls button#new-game {
   background: linear-gradient(135deg, var(--accent) 0%, #0ea5e9 100%);
   color: #0a0a0f;
@@ -217,6 +224,16 @@ h1 {
 .hints-switch input:checked + .hints-switch-track .hints-switch-thumb {
   transform: translateX(0.95rem);
   background: #e7f8ff;
+}
+
+.hints-switch.hints-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hints-switch input:disabled + .hints-switch-track {
+  background: #242430;
+  border-color: var(--border);
 }
 
 
@@ -306,7 +323,7 @@ main {
 }
 
 #check {
-  width: 48% !important;
+  width: 35% !important;
 }
 
 .board-wrap.paused .board {

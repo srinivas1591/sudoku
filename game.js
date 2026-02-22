@@ -4,6 +4,7 @@
   let solution = [];
   let puzzle = [];
   let selected = null;
+  let moveHistory = [];
   let timerInterval = null;
   let elapsedSeconds = 0;
   let solved = false;
@@ -17,9 +18,11 @@
   const bestEl = document.getElementById("best");
   const difficultyEl = document.getElementById("difficulty");
   const hintsToggleEl = document.getElementById("hints-toggle");
+  const hintsSwitchEl = document.querySelector(".hints-switch");
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
+  const undoBtn = document.getElementById("undo");
   const numberStripEl = document.getElementById("number-strip");
   const HINTS_KEY = "sudoku-hints-enabled";
 
@@ -93,6 +96,7 @@
       boardWrapEl.classList.remove("paused");
       if (!solved) resumeTimer();
     }
+    updateUndoButtonState();
   }
 
   function showMessage(text, type = "") {
@@ -195,14 +199,37 @@
     });
   }
 
+  function updateUndoButtonState() {
+    if (!undoBtn) return;
+    undoBtn.disabled = paused || moveHistory.length === 0;
+  }
+
   function hintsEnabled() {
     return Boolean(hintsToggleEl && hintsToggleEl.checked);
   }
 
-  function isAllowedInRowOrColumn(r, c, n) {
+  function updateHintsAvailability() {
+    if (!hintsToggleEl) return;
+    const isEasy = difficultyEl.value === "easy";
+    hintsToggleEl.disabled = !isEasy;
+    if (hintsSwitchEl) {
+      hintsSwitchEl.classList.toggle("hints-disabled", !isEasy);
+    }
+    if (!isEasy) resetNumberStripState();
+    else if (selected) updateNumberStripForCell(selected.r, selected.c);
+  }
+
+  function isAllowedForCell(r, c, n) {
     for (let i = 0; i < 9; i++) {
       if (i !== c && puzzle[r][i] === n) return false;
       if (i !== r && puzzle[i][c] === n) return false;
+    }
+    const br = Math.floor(r / 3) * 3;
+    const bc = Math.floor(c / 3) * 3;
+    for (let rr = br; rr < br + 3; rr++) {
+      for (let cc = bc; cc < bc + 3; cc++) {
+        if ((rr !== r || cc !== c) && puzzle[rr][cc] === n) return false;
+      }
     }
     return true;
   }
@@ -223,20 +250,26 @@
 
     numberStripEl.querySelectorAll(".num-btn").forEach((btn) => {
       const n = Number.parseInt(btn.dataset.n, 10);
-      btn.disabled = !isAllowedInRowOrColumn(r, c, n);
+      btn.disabled = !isAllowedForCell(r, c, n);
     });
   }
 
-  function setCellValue(r, c, value) {
+  function setCellValue(r, c, value, skipHistory = false) {
     const cell = getCell(r, c);
     if (!cell || !cell.classList.contains("user")) return;
+    const prev = puzzle[r][c];
+    if (prev === value) return;
     puzzle[r][c] = value;
     cell.textContent = value === 0 ? "" : String(value);
     cell.classList.remove("wrong");
     clearMessage();
+    if (!skipHistory) {
+      moveHistory.push({ r, c, prev, next: value });
+    }
     if (selected && selected.r === r && selected.c === c) {
       updateNumberStripForCell(r, c);
     }
+    updateUndoButtonState();
   }
 
   function render() {
@@ -279,7 +312,9 @@
     clearHoverHighlights();
     clearSelectionClasses();
     selected = null;
+    moveHistory = [];
     resetNumberStripState();
+    updateUndoButtonState();
   }
 
   function getCell(r, c) {
@@ -381,14 +416,27 @@
     setPaused(false);
     createPuzzle(difficultyEl.value);
     render();
+    updateHintsAvailability();
     clearMessage();
     startTimer();
     updateBestDisplay();
+    updateUndoButtonState();
   }
 
   newGameBtn.addEventListener("click", newGame);
   pauseBtn.addEventListener("click", () => setPaused(!paused));
   checkBtn.addEventListener("click", check);
+  if (undoBtn) {
+    undoBtn.addEventListener("click", () => {
+      if (!moveHistory.length || paused) return;
+      const move = moveHistory.pop();
+      setCellValue(move.r, move.c, move.prev, true);
+      setSelectedCell(move.r, move.c);
+      const cell = getCell(move.r, move.c);
+      if (cell) cell.focus();
+      updateUndoButtonState();
+    });
+  }
   difficultyEl.addEventListener("change", newGame);
   if (hintsToggleEl) {
     hintsToggleEl.checked = localStorage.getItem(HINTS_KEY) === "true";
@@ -407,5 +455,6 @@
     });
   }
 
+  updateHintsAvailability();
   newGame();
 })();
