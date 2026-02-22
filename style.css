@@ -177,10 +177,9 @@ h1 {
 
 /* Message */
 .message {
-  min-height: 1.5rem;
   width: 100%;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   font-size: 0.95rem;
   font-weight: 500;
 }
