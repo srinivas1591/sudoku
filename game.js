@@ -19,6 +19,7 @@
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
+  const numberStripEl = document.getElementById("number-strip");
 
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
@@ -81,6 +82,10 @@
       if (document.activeElement && boardEl.contains(document.activeElement)) {
         document.activeElement.blur();
       }
+      selected = null;
+      clearSelectionClasses();
+      clearHoverHighlights();
+      resetNumberStripState();
       boardWrapEl.classList.add("paused");
     } else {
       boardWrapEl.classList.remove("paused");
@@ -151,6 +156,82 @@
     });
   }
 
+  function clearSelectionClasses() {
+    boardEl.querySelectorAll(".cell-focus").forEach((cell) => cell.classList.remove("cell-focus"));
+  }
+
+  function setSelectedCell(r, c) {
+    const cell = getCell(r, c);
+    if (!cell || !cell.classList.contains("user")) {
+      selected = null;
+      clearSelectionClasses();
+      return;
+    }
+    selected = { r, c };
+    clearSelectionClasses();
+    cell.classList.add("cell-focus");
+  }
+
+  function clearHoverHighlights() {
+    boardEl.querySelectorAll(".row-hover, .col-hover").forEach((cell) => {
+      cell.classList.remove("row-hover", "col-hover");
+    });
+  }
+
+  function applyHoverHighlights(r, c) {
+    clearHoverHighlights();
+    boardEl.querySelectorAll(".cell").forEach((cell) => {
+      if (+cell.dataset.r === r) cell.classList.add("row-hover");
+      if (+cell.dataset.c === c) cell.classList.add("col-hover");
+    });
+  }
+
+  function resetNumberStripState() {
+    if (!numberStripEl) return;
+    numberStripEl.querySelectorAll(".num-btn").forEach((btn) => {
+      btn.disabled = false;
+    });
+  }
+
+  function isAllowedInRowOrColumn(r, c, n) {
+    for (let i = 0; i < 9; i++) {
+      if (i !== c && puzzle[r][i] === n) return false;
+      if (i !== r && puzzle[i][c] === n) return false;
+    }
+    return true;
+  }
+
+  function updateNumberStripForCell(r, c) {
+    if (!numberStripEl) return;
+    const cell = getCell(r, c);
+    const shouldHint = difficultyEl.value === "easy" &&
+      !!cell &&
+      cell.classList.contains("user") &&
+      puzzle[r][c] === 0;
+
+    if (!shouldHint) {
+      resetNumberStripState();
+      return;
+    }
+
+    numberStripEl.querySelectorAll(".num-btn").forEach((btn) => {
+      const n = Number.parseInt(btn.dataset.n, 10);
+      btn.disabled = !isAllowedInRowOrColumn(r, c, n);
+    });
+  }
+
+  function setCellValue(r, c, value) {
+    const cell = getCell(r, c);
+    if (!cell || !cell.classList.contains("user")) return;
+    puzzle[r][c] = value;
+    cell.textContent = value === 0 ? "" : String(value);
+    cell.classList.remove("wrong");
+    clearMessage();
+    if (selected && selected.r === r && selected.c === c) {
+      updateNumberStripForCell(r, c);
+    }
+  }
+
   function render() {
     boardEl.innerHTML = "";
     for (let r = 0; r < 9; r++) {
@@ -162,34 +243,36 @@
         cell.setAttribute("role", "gridcell");
         cell.setAttribute("tabindex", "0");
         cell.addEventListener("focus", () => {
-          selected = { r, c };
-          boardEl.querySelectorAll(".cell").forEach((c) => c.classList.remove("cell-focus"));
-          cell.classList.add("cell-focus");
-          if (cell.classList.contains("user") && cell.textContent.length > 0) {
-            requestAnimationFrame(() => placeCaretAtEnd(cell));
-          }
+          setSelectedCell(r, c);
           scrollFocusedCellIntoView();
-        });
-        cell.addEventListener("blur", () => {
-          selected = null;
-          cell.classList.remove("cell-focus");
+          updateNumberStripForCell(r, c);
         });
         cell.addEventListener("click", () => cell.focus());
+        cell.addEventListener("mouseenter", () => {
+          applyHoverHighlights(r, c);
+          updateNumberStripForCell(r, c);
+        });
+        cell.addEventListener("mouseleave", () => {
+          clearHoverHighlights();
+          if (selected) updateNumberStripForCell(selected.r, selected.c);
+          else resetNumberStripState();
+        });
         if (puzzle[r][c] !== 0) {
           cell.classList.add("given");
           cell.textContent = puzzle[r][c];
           cell.addEventListener("keydown", onKeyNavigateOnly);
         } else {
           cell.classList.add("user");
-          cell.contentEditable = "true";
-          cell.setAttribute("inputmode", "numeric");
-          cell.textContent = "";
+          cell.textContent = puzzle[r][c] === 0 ? "" : String(puzzle[r][c]);
           cell.addEventListener("keydown", onKey);
-          cell.addEventListener("input", onInput);
         }
         boardEl.appendChild(cell);
       }
     }
+    clearHoverHighlights();
+    clearSelectionClasses();
+    selected = null;
+    resetNumberStripState();
   }
 
   function getCell(r, c) {
@@ -223,34 +306,15 @@
     setTimeout(doScroll, 350);
   }
 
-  function onInput(e) {
-    const el = e.target;
-    const v = el.textContent.replace(/\D/g, "").slice(-1);
-    el.textContent = v;
-    placeCaretAtEnd(el);
-    const r = +el.dataset.r, c = +el.dataset.c;
-    puzzle[r][c] = v ? parseInt(v, 10) : 0;
-    el.classList.remove("wrong");
-    clearMessage();
-  }
-
-  function placeCaretAtEnd(el) {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
   function onKey(e) {
-    const el = e.target;
-    const r = +el.dataset.r, c = +el.dataset.c;
-    if (e.key >= "1" && e.key <= "9") return;
+    const r = +e.target.dataset.r, c = +e.target.dataset.c;
+    if (e.key >= "1" && e.key <= "9") {
+      setCellValue(r, c, parseInt(e.key, 10));
+      e.preventDefault();
+      return;
+    }
     if (e.key === "Backspace" || e.key === "Delete") {
-      el.textContent = "";
-      puzzle[r][c] = 0;
-      el.classList.remove("wrong");
+      setCellValue(r, c, 0);
       e.preventDefault();
       return;
     }
@@ -319,6 +383,14 @@
   pauseBtn.addEventListener("click", () => setPaused(!paused));
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
+  if (numberStripEl) {
+    numberStripEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".num-btn");
+      if (!btn || btn.disabled || !selected || paused) return;
+      const n = Number.parseInt(btn.dataset.n, 10);
+      setCellValue(selected.r, selected.c, n);
+    });
+  }
 
   newGame();
 })();
