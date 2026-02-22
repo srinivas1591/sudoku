@@ -260,6 +260,10 @@ main {
   }
 }
 
+#check {
+  width: 75% !important;
+}
+
 .board-wrap.paused .board {
   filter: blur(6px);
   pointer-events: none;
