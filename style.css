@@ -163,15 +163,60 @@ h1 {
   box-shadow: 0 6px 20px var(--accent-glow);
 }
 
-.controls button#check {
-  background: var(--surface-elevated);
-  border-color: var(--border-strong);
+.hints-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  user-select: none;
 }
 
-.controls button#check:hover {
-  background: rgba(52, 211, 153, 0.12);
-  border-color: rgba(52, 211, 153, 0.4);
-  color: var(--correct);
+.hints-switch-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.hints-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.hints-switch-track {
+  position: relative;
+  width: 2.2rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #2b2b37;
+  border: 1px solid var(--border-strong);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.hints-switch-thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #c7c7d4;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.hints-switch input:checked + .hints-switch-track {
+  background: rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+.hints-switch input:checked + .hints-switch-track .hints-switch-thumb {
+  transform: translateX(0.95rem);
+  background: #e7f8ff;
 }
 
 
@@ -261,7 +306,7 @@ main {
 }
 
 #check {
-  width: 75% !important;
+  width: 48% !important;
 }
 
 .board-wrap.paused .board {

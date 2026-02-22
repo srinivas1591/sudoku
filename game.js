@@ -16,10 +16,12 @@
   const timerEl = document.getElementById("timer");
   const bestEl = document.getElementById("best");
   const difficultyEl = document.getElementById("difficulty");
+  const hintsToggleEl = document.getElementById("hints-toggle");
   const newGameBtn = document.getElementById("new-game");
   const pauseBtn = document.getElementById("pause-btn");
   const checkBtn = document.getElementById("check");
   const numberStripEl = document.getElementById("number-strip");
+  const HINTS_KEY = "sudoku-hints-enabled";
 
   function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
@@ -193,6 +195,10 @@
     });
   }
 
+  function hintsEnabled() {
+    return Boolean(hintsToggleEl && hintsToggleEl.checked);
+  }
+
   function isAllowedInRowOrColumn(r, c, n) {
     for (let i = 0; i < 9; i++) {
       if (i !== c && puzzle[r][i] === n) return false;
@@ -204,7 +210,8 @@
   function updateNumberStripForCell(r, c) {
     if (!numberStripEl) return;
     const cell = getCell(r, c);
-    const shouldHint = difficultyEl.value === "easy" &&
+    const shouldHint = hintsEnabled() &&
+      difficultyEl.value === "easy" &&
       !!cell &&
       cell.classList.contains("user") &&
       puzzle[r][c] === 0;
@@ -383,6 +390,14 @@
   pauseBtn.addEventListener("click", () => setPaused(!paused));
   checkBtn.addEventListener("click", check);
   difficultyEl.addEventListener("change", newGame);
+  if (hintsToggleEl) {
+    hintsToggleEl.checked = localStorage.getItem(HINTS_KEY) === "true";
+    hintsToggleEl.addEventListener("change", () => {
+      localStorage.setItem(HINTS_KEY, String(hintsToggleEl.checked));
+      if (selected) updateNumberStripForCell(selected.r, selected.c);
+      else resetNumberStripState();
+    });
+  }
   if (numberStripEl) {
     numberStripEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".num-btn");
