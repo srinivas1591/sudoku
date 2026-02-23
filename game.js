@@ -400,6 +400,10 @@
     return false;
   }
 
+  function isBoardFilled() {
+    return puzzle.flat().every((v) => v !== 0);
+  }
+
   function check() {
     let hasWrong = false;
     boardEl.querySelectorAll(".cell.user").forEach(cell => {
@@ -412,7 +416,7 @@
       }
     });
     if (hasWrong) showMessage("Some cells are incorrect.", "error");
-    else if (puzzle.flat().every((v, i) => v === solution.flat()[i])) {
+    else if (isBoardFilled()) {
       stopTimer();
       if (!solved) {
         solved = true;
