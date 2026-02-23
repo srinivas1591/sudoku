@@ -121,7 +121,8 @@ h1 {
 }
 
 .controls select,
-.controls button {
+.controls button,
+.board-actions button {
   font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
@@ -135,27 +136,39 @@ h1 {
 }
 
 .controls select:hover,
-.controls button:hover {
+.controls button:hover,
+.board-actions button:hover {
   background: var(--surface-elevated);
   border-color: var(--border-strong);
 }
 
 .controls select:focus,
-.controls button:focus {
+.controls button:focus,
+.board-actions button:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.controls button:active {
+.controls button:active,
+.board-actions button:active {
   transform: scale(0.98);
 }
 
-.controls button:disabled {
+.controls button:disabled,
+.board-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.board-actions {
+  margin-top: 0.65rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .controls button#new-game {
@@ -320,10 +333,6 @@ main {
   .board-wrap {
     padding: 0.25rem;
   }
-}
-
-#check {
-  width: 35% !important;
 }
 
 .board-wrap.paused .board {

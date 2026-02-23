@@ -80,7 +80,9 @@
 
   function setPaused(value) {
     paused = value;
-    pauseBtn.textContent = paused ? "Resume" : "Pause";
+    pauseBtn.innerHTML = paused ? "&#9654;" : "&#10073;&#10073;";
+    pauseBtn.setAttribute("aria-label", paused ? "Resume" : "Pause");
+    pauseBtn.setAttribute("title", paused ? "Resume" : "Pause");
     pauseBtn.setAttribute("aria-pressed", paused ? "true" : "false");
     if (paused) {
       stopTimer();
@@ -383,13 +385,28 @@
     if (next) next.focus();
   }
 
+  function hasConflict(r, c, val) {
+    for (let i = 0; i < 9; i++) {
+      if (i !== c && puzzle[r][i] === val) return true;
+      if (i !== r && puzzle[i][c] === val) return true;
+    }
+    const br = Math.floor(r / 3) * 3;
+    const bc = Math.floor(c / 3) * 3;
+    for (let rr = br; rr < br + 3; rr++) {
+      for (let cc = bc; cc < bc + 3; cc++) {
+        if ((rr !== r || cc !== c) && puzzle[rr][cc] === val) return true;
+      }
+    }
+    return false;
+  }
+
   function check() {
     let hasWrong = false;
     boardEl.querySelectorAll(".cell.user").forEach(cell => {
       const r = +cell.dataset.r, c = +cell.dataset.c;
       const val = puzzle[r][c];
       cell.classList.remove("wrong");
-      if (val !== 0 && val !== solution[r][c]) {
+      if (val !== 0 && hasConflict(r, c, val)) {
         cell.classList.add("wrong");
         hasWrong = true;
       }
