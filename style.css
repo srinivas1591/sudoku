@@ -120,6 +120,17 @@ h1 {
   margin-bottom: 0.5rem;
 }
 
+@media (max-width: 600px) {
+  .controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 420px;
+    align-items: center;
+  }
+}
+
 .controls select,
 .controls button,
 .board-actions button {
@@ -133,6 +144,14 @@ h1 {
   color: var(--text);
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+@media (max-width: 600px) {
+  .controls select,
+  .controls button {
+    font-size: 0.82rem;
+    padding: 0.5rem 0.7rem;
+  }
 }
 
 .controls select:hover,
@@ -194,6 +213,18 @@ h1 {
   color: var(--text-soft);
   cursor: pointer;
   user-select: none;
+}
+
+@media (max-width: 600px) {
+  .hints-switch {
+    justify-self: end;
+    padding: 0.3rem 0.45rem;
+    gap: 0.3rem;
+  }
+
+  .hints-switch-text {
+    font-size: 0.78rem;
+  }
 }
 
 .hints-switch-text {
