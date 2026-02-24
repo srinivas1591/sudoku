@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sudoku</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -23,8 +24,8 @@
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <button type="button" id="new-game">New Game</button>
-        <button type="button" id="pause-btn" aria-label="Pause" title="Pause">&#10073;&#10073;</button>
+        <button type="button" id="new-game" class="icon-btn" aria-label="New Game" title="New Game"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></button>
+        <button type="button" id="pause-btn" class="icon-btn" aria-label="Pause" title="Pause">&#10073;&#10073;</button>
         <label class="hints-switch" for="hints-toggle">
           <span class="hints-switch-text">Hints</span>
           <input type="checkbox" id="hints-toggle" />
@@ -52,8 +53,8 @@
         <button type="button" class="num-btn" data-n="9">9</button>
       </div>
       <div class="board-actions">
-        <button type="button" id="check">Check</button>
-        <button type="button" id="undo">Undo</button>
+        <button type="button" id="check" class="icon-btn" aria-label="Check" title="Check">&#10003;</button>
+        <button type="button" id="undo" class="icon-btn" aria-label="Undo" title="Undo"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
       </div>
     </main>
     <footer>
